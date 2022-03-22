@@ -5,8 +5,6 @@ import {Button, Modal} from 'react-bootstrap';
 import './UserCrud.css';
 import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
-import FormControl from 'react-bootstrap/FormControl';
-import Form from 'react-bootstrap/Form';
 import { Link } from 'react-router-dom'
 
 
@@ -14,16 +12,8 @@ import { Link } from 'react-router-dom'
 const headerProps = {
     icon: 'users',
     title: 'Usuários',
-    subtitle: 'Cadastro de usuários'
+    subtitle: 'Gerenciamento de usuários'
 };
-
-const initialState = {
-    user : {
-        name: '',
-        email: ''
-    },
-    list: []
-}
 
 export default class UserCrud extends Component {
 
@@ -62,7 +52,7 @@ export default class UserCrud extends Component {
     }
 
     clear() {
-        this.setState({ user: initialState.user });
+        this.setState({ ...this.initialState.user });
     }
 
     save() {
@@ -71,7 +61,7 @@ export default class UserCrud extends Component {
         api[method](user)
             .then(resp => {
                 const list = this.getUpdatedList(resp.data);
-                this.setState( { user: initialState.user, list: list} )
+                this.setState( { user: this.initialState.user, list: list} )
             })
     }
 
@@ -152,7 +142,7 @@ export default class UserCrud extends Component {
 
     renderPersonTable() {
         return (
-            <table className="table mt-4">
+            <table className="table mt-4 table-striped">
                 <thead>
                     <th>Usuário</th>
                     <th>Nome</th>
@@ -161,7 +151,7 @@ export default class UserCrud extends Component {
                     <th>Passaporte</th>
                     <th>Afiliação</th>
                     <th>
-                        <Link to="/mail/add">
+                        <Link to="/user/add">
                             <i className="fa fa-plus text-success"></i>
                         </Link>
                     </th>
@@ -183,7 +173,7 @@ export default class UserCrud extends Component {
                 <td>{person.cpf}</td>
                 <td>{person.passport}</td>
                 <td>
-                    <button className="btn primary">
+                    <button className="btn btn-info btn-lg">
                         <i className="fa fa-address-book-o" onClick={e => {this.toggle(e, person.uid)}}></i>
                     </button>
 
@@ -231,29 +221,55 @@ export default class UserCrud extends Component {
         if(!sync){
             return;
         }
-        if(sync.status == "pending"){
-            return (
-                <ul className="list-group">
+
+        switch(sync.status){
+
+            case "pending":
+                return (
+                    <ul className="list-group">
+                        <li>
+                            <Link to="/" className="text-success">
+                                    Aprovar <i className="fa fa-check-square-o"></i>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/" className="text-danger">
+                                    Rejeitar <i className="fa fa-remove"></i>
+                            </Link>
+                        </li>
+                    </ul>
+                );
+            
+            case "rejected":
+                return (
+                    <li>
+                        Rejeitado <i className="fa fa-ban text-danger"></i>
+                    </li>
+                );
+            
+            case "failed":
+                return (
+                    <li className="text-danger">
+                        Falhou <i className="fa fa-exclamation-triangle"></i>
+                    </li>
+                );
+
+            case "valid" || "update":
+                return (
+                    <li>
+                        <Link to="/" className="text-primary">
+                                Sincronizar <i className="fa fa-refresh"></i>
+                        </Link>
+                    </li>
+                );
+            case "sync":
+                return (
                     <li>
                         <Link to="/" className="text-success">
-                                Aprovar <i className="fa fa-check-square-o"></i>
+                                Sincronizado <i className="fa fa-check-circle"></i>
                         </Link>
                     </li>
-                    <li>
-                        <Link to="/" className="text-danger">
-                                Rejeitar <i className="fa fa-remove"></i>
-                        </Link>
-                    </li>
-                </ul>
-            );
-        }else if(sync.status == "update"){
-            return (
-                <li>
-                    <Link to="/" className="text-primary">
-                            Atualizar <i className="fa fa-refresh"></i>
-                    </Link>
-                </li>
-            );
+                );
         }
 
     }
@@ -310,9 +326,9 @@ export default class UserCrud extends Component {
         )))
     }
 
-    sync(event){
+    sync(event, id_domain){
         event.preventDefault();
-        api.put('/service/1?service=sync')
+        api.put(`/service/${id_domain}?service=sync`)
             .then( resp => {
                 const personList = resp.data;
                 this.setState({ list: personList });
@@ -335,7 +351,7 @@ export default class UserCrud extends Component {
             <div className="container">
                 <Navbar.Brand href="#home"></Navbar.Brand>
                 <Nav className="me-auto">
-                    <Nav.Link className="btn btn-info d-flex justify-content-end" href="#" onClick={e => this.sync(e)}>Sincronizar</Nav.Link>
+                    <button className="btn btn-info d-flex justify-content-end" href="#" onClick={e => this.sync(e, 1)}>Sincronizar</button>
                 </Nav>
             </div>
           </Navbar>

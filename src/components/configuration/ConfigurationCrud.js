@@ -162,15 +162,16 @@ export default class ConfigurationCrud extends Component {
     }
 
     renderEmailRows(mail){
-        return (
-            <tr key={String(mail.id)+"email"}>
-                <td>{mail.address}</td>
-                <td>{mail.server}</td>
-                <td>{mail.port}</td>
-                <td>{mail.protocol}</td>
-            </tr>
-        )
-
+        if(mail){
+            return (
+                <tr key={String(mail.id)+"email"}>
+                    <td>{mail.address}</td>
+                    <td>{mail.server}</td>
+                    <td>{mail.port}</td>
+                    <td>{mail.protocol}</td>
+                </tr>
+            )
+        }
     }
 
     render() {

@@ -3,6 +3,7 @@ import { Routes, Route, Redirect } from 'react-router-dom';
 
 import Home from '../components/home/Home';
 import UserCrud from '../components/user/UserCrud';
+import UserAdd from '../components/user/UserAdd';
 import DomainCrud from '../components/domain/DomainCrud';
 import MailCrud from '../components/mail/Mail';
 import MailAdd from '../components/mail/MailAdd';
@@ -22,7 +23,7 @@ export default props =>
             <Route path="/ldap" element={<Ldap />} />
             <Route path="/ldap/add" element={<MailAdd />} />
             <Route path="/users" element={<UserCrud />} />
-            <Route path="/users/add" element={<UserCrud />} />
+            <Route path="/user/add" element={<UserAdd />} />
             <Route path="*" element={<Home />} />
         </Routes>
     </Provider>
