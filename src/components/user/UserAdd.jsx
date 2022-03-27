@@ -676,10 +676,10 @@ export default class UserCrud extends Component {
                 size="lg"
                 >
                     <Modal.Header closeButton>
-                    <Modal.Title> </Modal.Title>
+                    <Modal.Title> Editar Afiliação? </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        Ao continuar suas alterações serão perdidas
+                        <p className="text text-danger">Ao continuar suas alterações não salvas serão perdidas!</p>
                     </Modal.Body>
                     <Modal.Footer>
                     <Button variant="secondary" onClick={e => {this.toggle(e)}}>
