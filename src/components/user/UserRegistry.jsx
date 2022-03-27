@@ -6,14 +6,14 @@ import Calendar from 'react-calendar';
 
 
 const headerProps = {
-    icon: 'users',
-    title: 'Usuários',
-    subtitle: 'Auto registro'
+    icon: 'user-plus',
+    title: 'Solicitação de Cadastro',
+    subtitle: ''
 };
 
 const uri = "/person"
 
-export default class UserCrud extends Component {
+export default class UserRegistry extends Component {
 
     constructor(props) {
         super(props);
@@ -104,7 +104,7 @@ export default class UserCrud extends Component {
 
     clear() {
         this.setState({ ...this.initialState });
-        window.location = '/users';
+        window.location = '/success';
     }
 
     save() {
@@ -135,17 +135,8 @@ export default class UserCrud extends Component {
 
         api[method](to_uri, user)
             .then(resp => {
-                this.syncUser(resp.data.ldap_sync)
-                //const list = this.getUpdatedList(resp.data);
-                //this.clear();
-            });              
-    }
-
-    syncUser(sync) {
-        api.put(`innova-ldap/${sync.id}?resolve=valid`)
-            .then(resp => {
                 this.clear();
-            })
+            });              
     }
 
     getUpdatedList(user) {
@@ -548,6 +539,7 @@ export default class UserCrud extends Component {
 
     render() {
         return (
+
             <Main {...headerProps}>
                 {this.renderForm()}
             </Main>

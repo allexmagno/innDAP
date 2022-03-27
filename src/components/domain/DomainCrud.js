@@ -89,7 +89,7 @@ export default class UserCrud extends Component {
                 <th>Nome</th>
                 <th>Domínio</th>
                 <th>
-                        <Link to="/mail/add">
+                        <Link to="#">
                             <i className="fa fa-plus text-success"></i>
                         </Link>
                 </th>

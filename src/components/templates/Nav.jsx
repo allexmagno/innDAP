@@ -10,7 +10,7 @@ export default props =>
             <NavItems icon="home" route="/" name="Início"/>
             <NavItems icon="building" route="domains" name="Domínios"/>
             <NavItems icon="envelope" route="mail" name="E-mail" />
-            <NavItems icon="database" route="ldap" name="Servidores LDAP" />
+            <NavItems icon="sitemap" route="ldap" name="LDAP" />
             <NavItems icon="cogs" route="config" name="Configurações"/>
             <NavItems icon="users" route="users" name="Usuários"/>            
             <NavItems icon="sign-out" route="logout" name="Sair"/>

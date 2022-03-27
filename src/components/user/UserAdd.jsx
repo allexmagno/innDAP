@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Main from '../templates/Main';
 import api from '../../services/Axios';
 import Select from 'react-select';
-import Calendar from 'react-calendar';
+import { Button, Modal } from 'react-bootstrap';
 
 
 const headerProps = {
@@ -19,6 +19,7 @@ export default class UserCrud extends Component {
         super(props);
         this.state = {
             list: [],
+            list_ok: [],
             user: {
                 name: "",
                 surname: "",
@@ -30,18 +31,19 @@ export default class UserCrud extends Component {
                 domain: "",
                 affiliations: []
             },
+            aff_change: null,
             count: 0,
             open: false,
             modal: false,
             saved: false,
             affiliation: {
-                affiliation: 0,
+                affiliation: null,
                 organization: "",
                 type: {},
                 subtype: {},
                 role: "",
                 entrance: "",
-                exit: ""
+                exit: null
             },
             affiliationSubType: [],
             affiliationsType: [
@@ -79,18 +81,89 @@ export default class UserCrud extends Component {
     };
 
     initialState = {
-            list: [],
-            user: {},
-            open: false,
-            modal: false,
-            saved: false
+        list: [],
+        user: {
+            name: "",
+            surname: "",
+            given_name: "",
+            email: "",
+            cpf: "",
+            passport: "",
+            password: "",
+            domain: "",
+            affiliations: []
+        },
+        count: 0,
+        open: false,
+        modal: false,
+        saved: false,
+        affiliation: {
+            affiliation: null,
+            organization: "",
+            type: {},
+            subtype: {},
+            role: "",
+            entrance: "",
+            exit: null
+        },
+        affiliationSubType: [],
+        affiliationsType: [
+            {value: "STAFF", label: "Equipe do Parque", subtype: [
+                {value: "POSITION", label: "Funções de Liderança"},
+                {value: "EMPLOYEE", label: "Funcionário"},
+                {value: "SCHOLARSHIP", label: "Bolsista"},
+                {value: "OTHER", label: "Outros"}
+                ]
+            },
+            {value: "MEMBER", label: "Membros", subtype: [
+                {value: "COMPANY", label: "Empresa Residente"},
+                {value: "COMPANY_AFFILIATES", label: "Empresa Associada"},
+                {value: "STARTUP", label: "Startup Residente"},
+                {value: "STARTUP_AFFILIATED", label: "Startup Associada"},
+                {value: "ENTREPRENEUR", label: "Empreendedores/Empresas sem CNPJ"}
+            ]},
+            {value: "PARTNER", label: "Parceiros", subtype: [
+                {value: "EDU", label: "Entidades Acadêmicas"},
+                {value: "GOV", label: "Entidades Governamentais"},
+                {value: "COM", label: "Entidades Comerciais"},
+                {value: "ORG", label: "Entidades Sem Fins Lucrativos"},
+                {value: "STAKEHOLDERS", label: "Entidades Intraorganizacionais"}
+            ]},
+        ]
     }
 
     componentDidMount() {
         const user = JSON.parse(localStorage.getItem('user'));
-        if(user){
-        this.setState({ user: user });
         localStorage.removeItem("user");
+        if(user){
+            let list = [];
+            for(let i in user.affiliations){
+                const aff = user.affiliations[i];
+                let affiliation = {
+                    id: aff.id,
+                    affiliation: aff.affiliation,
+                    organization: aff.organization,
+                    type: {},
+                    subtype: {},
+                    role: aff.role,
+                    entrance: aff.entrance,
+                    exit: aff.exit
+                };
+
+                for(let t of this.state.affiliationsType){
+                    if(aff.type.toUpperCase() === t.value.toUpperCase()){
+                        affiliation.type = t;
+                        for(let s of t.subtype){
+                            if(aff.subtype.toUpperCase() == s.value.toUpperCase()){
+                                affiliation.subtype = s;
+                            }
+                        }
+                    }
+                }
+                list.push(affiliation)
+            }
+            user.affiliations = []
+            this.setState({ user: user, list: list })
         }
     }
 
@@ -108,36 +181,51 @@ export default class UserCrud extends Component {
     }
 
     save() {
-        if(this.state.affiliation){
-            this.addAffiliation();
-        }
+        // if(this.state.affiliation){
+        //     this.addAffiliation();
+        // }
+
+
         const user = this.state.user;
         const affiliations = this.state.list;
+
+        let method = 'post';
+        let to_uri = uri;
+        if(user.uid){
+            method = 'put';
+            to_uri = uri + `/${user.uid}`;
+        }
+
         for(let aff of affiliations){
+            let uid = null;
+            let aff_id = null;
+
+            if(method == 'put'){
+                uid = user.uid;
+                aff_id = aff.id;
+            }
             const affiliation = {
-                    affiliation: aff.affiliation,
-                    organization: aff.organization,
-                    type: aff.type.value,
-                    subtype: aff.subtype.value,
-                    role: aff.role,
-                    entrance: aff.entrance,
-                    exit: aff.exit
+                id: aff_id,
+                affiliation: aff.affiliation,
+                organization: aff.organization,
+                type: aff.type.value,
+                subtype: aff.subtype.value,
+                role: aff.role,
+                entrance: aff.entrance,
+                exit: aff.exit,
+                uid_innova_person: uid
             }
             user.affiliations.push(affiliation);
         }
 
-        let method = 'post';
-        let to_uri = uri;
-        // if(user.uid){
-        //     method = 'put';
-        //     to_uri = uri + `/${user.uid}`;
-        // }
-
         api[method](to_uri, user)
             .then(resp => {
-                this.syncUser(resp.data.ldap_sync)
+                if(method === 'post'){
+                    this.syncUser(resp.data.ldap_sync)
+                }else{
                 //const list = this.getUpdatedList(resp.data);
-                //this.clear();
+                    this.clear();
+                }
             });              
     }
 
@@ -161,18 +249,20 @@ export default class UserCrud extends Component {
     }
 
     updateAffiliationField(event) {
+        if(event.target.name === "affiliation"){
+            if(event.target.value <= 0){
+                event.target.value = null;
+            }
+        }
         const affiliation = { ...this.state.affiliation };
         affiliation[event.target.name] = event.target.value;
         this.setState({ affiliation: affiliation });
     }
 
-    toggle(event, id){
-        if(id){
-            const user = this.state.list.filter( u => u.uid == id).pop()
-            this.setState({ user: user })
-        }
+    toggle(event, aff){
 
         this.setState({ 
+            aff_change: aff,
             open: !this.state.open,
             modal: !this.state.modal,
             icon: this.state.icon == 'left' ? 'down' : 'left'
@@ -206,7 +296,7 @@ export default class UserCrud extends Component {
                 <strong>Instituição:</strong> {aff.organization}<br/>
                 <strong>Início:</strong> {aff.entrance} <br/>
                 <strong>Saída:</strong> {aff.exit} <br/>
-                <button className="btn btn-outline-warning" onClick={e => this.editAffiliation(e, aff)}> 
+                <button className="btn btn-outline-warning" onClick={e => {this.toggle(e, aff)}}> 
                     Editar
                 </button>
                 <button className="btn btn-outline-danger ml-2" onClick={e => this.removeAffiliation(e, aff)}> 
@@ -217,13 +307,13 @@ export default class UserCrud extends Component {
     }
 
     editAffiliation(event, aff){
-        const a = window.confirm("Ao continuar os dados em edição serão perdidos");
-        if(a){
-            const list = this.state.list.filter( a => aff.affiliation !== a.affiliation );
-            this.setState({ affiliation: aff, list: list })
-            this.selectTypeRef.setValue(aff.type);
-            this.selectSubTypeRef.setValue(aff.subtype)
-        }
+        this.toggle(event);
+        const list = this.state.list.filter( a => aff.affiliation !== a.affiliation );
+        this.state.affiliation = aff
+        this.setState({ list: list })
+        this.selectTypeRef.setValue(aff.type);
+        this.selectSubTypeRef.setValue(aff.subtype)
+        
     }
 
     removeAffiliation(event, aff){
@@ -233,9 +323,11 @@ export default class UserCrud extends Component {
             for(let i in list){
                 list[i].affiliation = parseInt(i) + 1;
             }
+            this.state.list = list;
             this.setState({ list: list })
         }
     }
+
 
     renderForm() {
         return(
@@ -260,8 +352,9 @@ export default class UserCrud extends Component {
                                 name="domain"
                                 value={this.state.user.domain}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o Nome"
-                            />
+                                placeholder="Domínio de gerenciamento"
+                                required
+                            />    
                         </div>
                     </div>
 
@@ -272,7 +365,7 @@ export default class UserCrud extends Component {
                                 name="name"
                                 value={this.state.user.name}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o Nome"
+                                placeholder="Primeiro nome"
                             />
                         </div>
                     </div>
@@ -284,7 +377,7 @@ export default class UserCrud extends Component {
                                 name="given_name"
                                 value={this.state.user.given_name}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o Nome"
+                                placeholder="Nome do meio"
                             />
                         </div>
                     </div>
@@ -296,7 +389,7 @@ export default class UserCrud extends Component {
                                 name="surname"
                                 value={this.state.user.surname}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o Sobrenome"
+                                placeholder="Sobrenome"
                             />
                         </div>
                     </div>
@@ -308,7 +401,7 @@ export default class UserCrud extends Component {
                                 name="email"
                                 value={this.state.user.email}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o endereço de e-mail"
+                                placeholder="Endereço de e-mail"
                             />
                         </div>
                     </div>
@@ -320,7 +413,7 @@ export default class UserCrud extends Component {
                                 name="cpf"
                                 value={this.state.user.cpf}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o CPF"
+                                placeholder="xxx.xxx.xxx-xx"
                             />
                         </div>
                     </div>
@@ -333,7 +426,7 @@ export default class UserCrud extends Component {
                                 name="passport"
                                 value={this.state.user.passport}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite o Passaporte"
+                                placeholder="Série Passaporte"
                             />
                         </div>
                     </div>
@@ -345,7 +438,7 @@ export default class UserCrud extends Component {
                                 name="password"
                                 value={this.state.user.password}
                                 onChange={e => this.updateUserField(e)}
-                                placeholder="Digite a Senha"
+                                placeholder="Senha"
                             />
                         </div>
                     </div>
@@ -359,13 +452,14 @@ export default class UserCrud extends Component {
                     <div className="col-12 col-md-8">
 
                     <div className="row">
-                            <div className="col-12 col-md-3">
+                            <div id="number" className="col-12 col-md-3">
                                 <div className="form-group">
-                                    <input type="hidden" className="form-control"
+                                    <input type="number" min="1" className="form-control"
+                                        id="input_affiliation"
                                         name="affiliation"
                                         value={this.state.affiliation.affiliation}
                                         onChange={e => this.updateAffiliationField(e)}
-                                        disabled
+                                        required
                                     />
                                 </div>
                             </div>
@@ -377,6 +471,7 @@ export default class UserCrud extends Component {
                                 <div className="form-group">
                                     <label>Instituição</label>
                                     <input type="text" className="form-control"
+                                        id="input_organization"
                                         name="organization"
                                         value={this.state.affiliation.organization}
                                         onChange={e => this.updateAffiliationField(e)}
@@ -410,7 +505,7 @@ export default class UserCrud extends Component {
                                         name="role"
                                         value={this.state.affiliation.role}
                                         onChange={e => this.updateAffiliationField(e)}
-                                        placeholder="Digite o Cargo"
+                                        placeholder="Cargo"
                                     />
                                 </div>
                             </div>
@@ -421,6 +516,7 @@ export default class UserCrud extends Component {
                                 <div className="form-group">
                                     <label>Data de Início</label>
                                     <input type="date" className="form-control"
+                                        id="input_entrance"
                                         name="entrance"
                                         value={this.state.affiliation.entrance}
                                         onChange={e => this.updateAffiliationField(e)}
@@ -485,6 +581,7 @@ export default class UserCrud extends Component {
             onChange={this.handleTypeAffiliations}
             options={this.state.affiliationsType}
             placeholder= 'Selecione o tipo de vínculo'
+            id="input_type"
             />
         );
     }
@@ -499,30 +596,47 @@ export default class UserCrud extends Component {
             options={this.state.affiliationSubType}
             noOptionsMessage={() => "Selecione um Tipo"}  
             placeholder= 'Selecione o subtipo de vínculo'
+            id="input_subtype"
             />
         );
     }
 
     async addAffiliation(event){
         const aff = { ...this.state.affiliation };
-        let check = true;
+        let required = [];
 
-        if(!aff.organization) check = false;
-        if(!aff.type) check = false;
-        if(!aff.subtype) check = false;
-        if(!aff.entrance) check = false;
-
-        if(check){
+        if(!aff.affiliation){
+            required.push(document.getElementById("input_affiliation"));
+        }
+        if(!aff.organization){
+            required.push(document.getElementById("input_organization"));
+        }
+        if(!aff.type){
+             required.push(document.getElementById("input_type"));
+        }
+        if(!aff.subtype){
+            required.push(document.getElementById("input_subtype"));
+        }
+        if(!aff.entrance){
+            required.push(document.getElementById("input_entrance"));
+        }
+        const liAff = this.state.list.filter( a => a.affiliation == aff.affiliation);
+        if(liAff.length > 0){
+            required.push(document.getElementById("input_affiliation"));
+        }
+        console.log(required);
+        if(required.length == 0){
+            for(let inp of this.state.list_ok){
+                inp.style.border = "";
+            }
+            
             let l = this.state.list;
 
-            if(aff.affiliation === 0){
-                aff.affiliation = l.length + 1;
-            }
 
             l.push(aff);
 
             const affiliation = {
-                affiliation: 0,
+                affiliation: null,
                 organization: "",
                 type: "",
                 subtype: "",
@@ -535,7 +649,14 @@ export default class UserCrud extends Component {
             const sorted = l.sort((a, b) => {
                 return a.affiliation < b.affiliation ? -1 : a.affiliation > b.affiliation ? 1 : 0;
             })
-            this.setState({ list: sorted, affiliation: affiliation })
+
+            this.setState({ list: sorted, affiliation: affiliation, list_ok: [] })
+
+        }else{
+            for(let inp of required){
+                inp.style.border = "1px solid red";
+            }
+            this.setState({ list_ok: required});
         }
     }
     
@@ -546,9 +667,37 @@ export default class UserCrud extends Component {
         row.appendChild(newAff);
     }
 
+    render_modal(){
+        return (
+            <div>
+                <Modal 
+                show={this.state.modal} 
+                onHide={e => {this.toggle(e)}}
+                size="lg"
+                >
+                    <Modal.Header closeButton>
+                    <Modal.Title> </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Ao continuar suas alterações serão perdidas
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <Button variant="secondary" onClick={e => {this.toggle(e)}}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={e => {this.editAffiliation(e, this.state.aff_change)}}>
+                        Continuar
+                    </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
+        );
+    }
+
     render() {
         return (
             <Main {...headerProps}>
+                {this.render_modal()}
                 {this.renderForm()}
             </Main>
         );

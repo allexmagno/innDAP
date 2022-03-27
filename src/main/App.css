@@ -5,7 +5,7 @@
     --menu-top-height: 40px;
     --header-height: 100px;
     --aside-width: 180px;
-    --footer-height: 40px;
+    --footer-height: 70px;
 
     --shadow:
         0 2px 23px 0 rgba(0, 0, 0, 0.1),
@@ -49,6 +49,7 @@ aside.menu-area{
 
 main.content {
     grid-area: content;
+    overflow: auto;
 }
 
 footer.footer {

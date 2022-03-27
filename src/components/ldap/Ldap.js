@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 
 
 const headerProps = {
-    icon: 'database',
+    icon: 'sitemap',
     title: 'LDAP',
     subtitle: 'Gerenciamento de servidor LDAP'
 };
@@ -86,7 +86,7 @@ export default class UserCrud extends Component {
                     <th>BASE_DN</th>
                     <th>BIND_DN</th>
                     <th>
-                        <Link to="/ldap/add">
+                        <Link to="#">
                             <i className="fa fa-plus text-success"></i>
                         </Link>
                     </th>
@@ -111,15 +111,14 @@ export default class UserCrud extends Component {
                 <td>
                     <ul>
                         <li>
-                            <Link to="/ldap/edit" className="text-info">
+                            <a href="#" className="text-info">
                                 <i className="fa fa-edit"></i>
-                            </Link>
+                            </a>
                         </li>
                         <li>
-                            <Link to="/" className="text-danger">
+                            <a href="#" className="text-danger">
                                 <i className="fa fa-remove"></i>
-                            </Link>
-                            
+                            </a>
                         </li>
                     </ul>
                 </td>

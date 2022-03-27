@@ -108,7 +108,7 @@ export default class UserCrud extends Component {
                                 name="domain"
                                 value={this.state.mail.domain}
                                 onChange={e => this.updateField(e)}
-                                placeholder="Digite o domínio"
+                                placeholder="Domínio de gerenciamento"
                             />
                         </div>
                     </div>
@@ -120,7 +120,7 @@ export default class UserCrud extends Component {
                                 name="address"
                                 value={this.state.mail.address}
                                 onChange={e => this.updateField(e)}
-                                placeholder="Digite o endereço de e-mail"
+                                placeholder="Endereço de e-mail"
                             />
                         </div>
                     </div>
@@ -132,7 +132,7 @@ export default class UserCrud extends Component {
                                 name="server"
                                 value={this.state.mail.server}
                                 onChange={e => this.updateField(e)}
-                                placeholder="digite o domínio ou IP do servidor de e-mail"
+                                placeholder="FQDN ou IP do servidor de e-mail"
                             />
                         </div>
                     </div>
@@ -144,7 +144,7 @@ export default class UserCrud extends Component {
                                 name="port"
                                 value={this.state.mail.port}
                                 onChange={e => this.updateField(e)}
-                                placeholder="digite a porta do servidor de e-mail"
+                                placeholder="Ex.: 465"
                             />
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default class UserCrud extends Component {
                                 name="password"
                                 value={this.state.mail.password}
                                 onChange={e => this.updateField(e)}
-                                placeholder="digite a senha do servidor de e-mail"
+                                placeholder="Senha do servidor de e-mail"
                             />
                         </div>
                     </div>

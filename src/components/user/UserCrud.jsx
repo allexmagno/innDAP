@@ -8,7 +8,6 @@ import Nav from 'react-bootstrap/Nav';
 import { Link } from 'react-router-dom'
 
 
-
 const headerProps = {
     icon: 'users',
     title: 'Usuários',
@@ -26,7 +25,31 @@ export default class UserCrud extends Component {
             },
             open: false,
             modal: false,
-            icon: 'left'
+            icon: 'left',
+            affiliationsType: [
+                {value: "STAFF", label: "Equipe do Parque", subtype: [
+                    {value: "POSITION", label: "Funções de Liderança"},
+                    {value: "EMPLOYEE", label: "Funcionário"},
+                    {value: "SCHOLARSHIP", label: "Bolsista"},
+                    {value: "OTHER", label: "Outros"}
+                    ]
+                },
+                {value: "MEMBER", label: "Membros", subtype: [
+                    {value: "COMPANY", label: "Empresa Residente"},
+                    {value: "COMPANY_AFFILIATES", label: "Empresa Associada"},
+                    {value: "STARTUP", label: "Startup Residente"},
+                    {value: "STARTUP_AFFILIATED", label: "Startup Associada"},
+                    {value: "ENTREPRENEUR", label: "Empreendedores/Empresas sem CNPJ"}
+                ]},
+                {value: "PARTNER", label: "Parceiros", subtype: [
+                    {value: "EDU", label: "Entidades Acadêmicas"},
+                    {value: "GOV", label: "Entidades Governamentais"},
+                    {value: "COM", label: "Entidades Comerciais"},
+                    {value: "ORG", label: "Entidades Sem Fins Lucrativos"},
+                    {value: "STAKEHOLDERS", label: "Entidades Intraorganizacionais"}
+                ]},
+            ]
+
         };
         this.handleOpenModal = this.handleOpenModal.bind(this);
         this.handleCloseModal = this.handleCloseModal.bind(this);
@@ -36,10 +59,18 @@ export default class UserCrud extends Component {
 
 
     componentDidMount() {
+        this.mount();
+    }
+
+    mount(){
         api.get('/person')
             .then( resp => {
                 const personList = resp.data;
-                this.setState({ list: personList });
+                const sorted = personList.sort((a, b) => {
+                    return a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0;
+                })
+    
+                this.setState({ list: sorted });
             })
     }
 
@@ -63,6 +94,11 @@ export default class UserCrud extends Component {
                 const list = this.getUpdatedList(resp.data);
                 this.setState( { user: this.initialState.user, list: list} )
             })
+    }
+
+    editPerson(event, person){
+        localStorage.setItem("user", JSON.stringify(person));
+        window.location = "user/add";
     }
 
     getUpdatedList(user) {
@@ -142,7 +178,7 @@ export default class UserCrud extends Component {
 
     renderPersonTable() {
         return (
-            <table className="table mt-4 table-striped">
+            <table className="table mt-4 table-striped table-responsive">
                 <thead>
                     <th>Usuário</th>
                     <th>Nome</th>
@@ -166,45 +202,25 @@ export default class UserCrud extends Component {
     renderPersonRows(){
         return this.state.list.map(person => (
             
-            <tr key={String(person.uid)}>       
+            <tr key={String(person.uid)} >       
                 <td>{person.uid}</td>
                 <td>{person.name} {person.give_name} {person.surname}</td>
                 <td>{person.email}</td>
                 <td>{person.cpf}</td>
                 <td>{person.passport}</td>
                 <td>
-                    <button className="btn btn-info btn-lg">
+                    <button className="btn btn-info btn-lg mr-2">
                         <i className="fa fa-address-book-o" onClick={e => {this.toggle(e, person.uid)}}></i>
                     </button>
-
-                    <Modal 
-                    show={this.state.modal} 
-                    onHide={e => {this.toggle(e)}}
-                    size="lg"
-                    >
-                        <Modal.Header closeButton>
-                        <Modal.Title>Afiliações de { this.state.person.uid }</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            {this.renderAffiliationTable()}
-                        </Modal.Body>
-                        <Modal.Footer>
-                        <Button variant="secondary" onClick={e => {this.toggle(e)}}>
-                            Fechar
-                        </Button>
-                        {/* <Button variant="primary" onClick={e => {this.toggle(e)}}>
-                            Save Changes
-                        </Button> */}
-                        </Modal.Footer>
-                    </Modal>
+                    {person.affiliations ? person.affiliations.length : null }
                 </td>
                 <td>
                     <ul>
-                    {this.checkLdapStatus(person.ldap_sync)}
+                    {this.checkLdapStatus(person)}
                         <li>
-                            <Link to="/ldap/edit" className="text-info">
+                            <a href="#" onClick={e => this.editPerson(e, person)} className="text-info">
                                 Editar <i className="fa fa-edit"></i>
-                            </Link>
+                            </a>
                         </li>
                         {/* <li>
                             <Link to="/" className="text-danger">
@@ -217,7 +233,9 @@ export default class UserCrud extends Component {
         ));
     }
 
-    checkLdapStatus(sync){
+    checkLdapStatus(person) {
+        const sync =  person.ldap_sync;
+
         if(!sync){
             return;
         }
@@ -228,14 +246,14 @@ export default class UserCrud extends Component {
                 return (
                     <ul className="list-group">
                         <li>
-                            <Link to="/" className="text-success">
+                            <a href="#" className="text-success" onClick={e => {this.resolve(e, sync.id, "valid")}}>
                                     Aprovar <i className="fa fa-check-square-o"></i>
-                            </Link>
+                            </a>
                         </li>
                         <li>
-                            <Link to="/" className="text-danger">
+                            <a href="#" className="text-danger btn-toolbar" onClick={e => {this.resolve(e, sync.id, "rejected")}}>
                                     Rejeitar <i className="fa fa-remove"></i>
-                            </Link>
+                            </a>
                         </li>
                     </ul>
                 );
@@ -254,20 +272,29 @@ export default class UserCrud extends Component {
                     </li>
                 );
 
-            case "valid" || "update":
+            case "update":
                 return (
                     <li>
-                        <Link to="/" className="text-primary">
+                        <a href="#" className="text-primary" onClick={e => this.sync_entity(e, 1, person.uid)}>
                                 Sincronizar <i className="fa fa-refresh"></i>
-                        </Link>
+                        </a>
                     </li>
                 );
+
+            case "valid":
+                    return (
+                        <li>
+                            <a href="#" className="text-primary" onClick={e => this.save_entity(e, 1, person.uid)}>
+                                    Salvar LDAP <i className="fa fa-sitemap"></i>
+                            </a>
+                        </li>
+                    );
+    
+                
             case "sync":
                 return (
-                    <li>
-                        <Link to="/" className="text-success">
-                                Sincronizado <i className="fa fa-check-circle"></i>
-                        </Link>
+                    <li className="text-success">
+                        Sincronizado <i className="fa fa-check-circle"></i>
                     </li>
                 );
         }
@@ -276,20 +303,15 @@ export default class UserCrud extends Component {
 
     renderAffiliationTable() {
         return (
-            <table className="table mt-4">
+            <table className="table mt-4 table-striped table-responsive">
                 <thead>
                     <th></th>
-                    <th>Instituição</th>
-                    <th>Tipo</th>
-                    <th>Subtipo</th>
-                    <th>Função</th>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>
-                        <Link to="/mail/add">
-                            <i className="fa fa-plus text-success"></i>
-                        </Link>
-                    </th>
+                    <th><icon className="fa fa-institution"></icon>Instituição</th>
+                    <th><icon className="fa fa-tag"></icon>Tipo</th>
+                    <th><icon className="fa fa-tags"></icon>Subtipo</th>
+                    <th><icon className="fa fa-suitcase"></icon>Função</th>
+                    <th><icon className="fa fa-calendar-check-o"></icon>Entrada</th>
+                    <th><icon className="fa fa-calendar-times-o"></icon>Saída</th>
                 </thead>
                 <tbody>
                     {this.renderAffiliationRows()}
@@ -298,40 +320,89 @@ export default class UserCrud extends Component {
         )
     }
 
+    renderType(affiliation){
+        for(let type of this.state.affiliationsType){
+            if(type.value.toUpperCase() == affiliation.type.toUpperCase()){
+                return type.label;
+            }
+        }
+    }
+    renderSubType(affiliation){
+        for(let type of this.state.affiliationsType){
+            if(type.value.toUpperCase() == affiliation.type.toUpperCase())
+            for(let subtype of type.subtype){
+                if(subtype.value.toUpperCase() == affiliation.subtype.toUpperCase()){
+                    return subtype.label;
+                }
+            }
+        }
+    }
+
     renderAffiliationRows() {
         return (this.state.person.affiliations.map(aff => (
                 <tr key={String(aff.id)}>
                     <td>{aff.affiliation}</td>
                     <td>{aff.organization}</td>
-                    <td>{aff.type}</td>
-                    <td>{aff.subtype}</td>
+                    <td className="Affiliation">{this.renderType(aff)}</td>
+                    <td>{this.renderSubType(aff)}</td>
                     <td>{aff.role}</td>
                     <td>{aff.entrance}</td>
                     <td>{aff.exit}</td>
-                    <td>
-                    <ul>
-                        <li>
-                            <Link to="/ldap/edit" className="text-info">
-                                <i className="fa fa-edit"></i>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link to="/" className="text-danger">
-                                <i className="fa fa-remove"></i>
-                            </Link>
-                        </li>
-                    </ul>
-                </td>
                 </tr>
         )))
     }
 
     sync(event, id_domain){
+
+        event.target.disabled = true;
+        event.target.className = "btn btn-danger d-flex justify-content-end";
+        event.target.value = "Sincronizando..."
+
         event.preventDefault();
+        window.confirm("Aguarde enquanto a base é sincronizada!");
+
         api.put(`/service/${id_domain}?service=sync`)
             .then( resp => {
+                window.alert("Base sincronizada com sucesso!");
+                event.target.disabled = false;
+                event.target.className = "btn btn-info d-flex justify-content-end";
                 const personList = resp.data;
                 this.setState({ list: personList });
+
+            }).catch((error) =>{
+                window.alert("Erro ao sincronizar a base!");
+                event.target.disabled = false;
+                event.target.className = "btn btn-info d-flex justify-content-end";
+            });
+    }
+
+    sync_entity(event, id_domain, uid_entity){
+        event.preventDefault();
+        api.put(`/service/${id_domain}?service=sync-entity&uid=${uid_entity}`)
+            .then( resp => {
+                window.alert("Usuário salvo na base LDAP com sucesso!");
+                this.mount();
+            }).catch((error) =>{
+                window.alert("Erro ao sincronizar a base!");
+            });
+    }
+
+    save_entity(event, id_domain, uid_entity){
+        event.preventDefault();
+        api.put(`/service/${id_domain}?service=save&uid=${uid_entity}`)
+            .then( resp => {
+                window.alert("Usuário salvo na base LDAP com sucesso!");
+                this.mount();
+            }).catch((error) =>{
+                window.alert("Erro ao sincronizar a base!");
+            });
+    }
+
+    resolve(event, id_sync, resolve){
+        event.preventDefault();
+        api.put(`/innova-ldap/${id_sync}?resolve=${resolve}`)
+            .then( resp => {
+                this.mount();
             })
     }
 
@@ -343,15 +414,43 @@ export default class UserCrud extends Component {
         api.delete()
     }
 
+    render_modal(){
+        return (
+            <div>
+                <Modal 
+                show={this.state.modal} 
+                onHide={e => {this.toggle(e)}}
+                size="lg"
+                >
+                    <Modal.Header closeButton>
+                    <Modal.Title>Afiliações de { this.state.person.uid }</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.renderAffiliationTable()}
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <Button variant="secondary" onClick={e => {this.toggle(e)}}>
+                        Fechar
+                    </Button>
+                    {/* <Button variant="primary" onClick={e => {this.toggle(e)}}>
+                        Save Changes
+                    </Button> */}
+                    </Modal.Footer>
+                </Modal>
+            </div>
+        );
+    }
+    
     render() {
         return (
 
             <Main {...headerProps}>
+                {this.render_modal()}
             <Navbar bg="light" variant="light">
             <div className="container">
                 <Navbar.Brand href="#home"></Navbar.Brand>
                 <Nav className="me-auto">
-                    <button className="btn btn-info d-flex justify-content-end" href="#" onClick={e => this.sync(e, 1)}>Sincronizar</button>
+                    <input type="button" className="btn btn-info d-flex justify-content-end" id="sync" href="#" onClick={e => this.sync(e, 1)} value="Sincronizar"></input>
                 </Nav>
             </div>
           </Navbar>
