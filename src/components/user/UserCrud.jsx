@@ -25,6 +25,7 @@ export default class UserCrud extends Component {
             },
             open: false,
             modal: false,
+            modal_error: false,
             icon: 'left',
             affiliationsType: [
                 {value: "STAFF", label: "Equipe do Parque", subtype: [
@@ -113,17 +114,26 @@ export default class UserCrud extends Component {
         this.setState( {user} );
     }
 
-    toggle(event, uid){
-        if(uid){
-            const person = this.state.list.filter( p => p.uid == uid).pop()
-            this.setState({ person: person})
-        }
+    toggle(event, uid, error){
 
-        this.setState({ 
-            open: !this.state.open,
-            modal: !this.state.modal,
-            icon: this.state.icon == 'left' ? 'down' : 'left'
-        });
+        if(!error){
+            if(uid){
+                const person = this.state.list.filter( p => p.uid == uid).pop()
+                this.setState({ person: person})
+            }
+
+            this.setState({ 
+                open: !this.state.open,
+                modal: !this.state.modal,
+                icon: this.state.icon == 'left' ? 'down' : 'left'
+            });
+        }else{
+            this.setState({ 
+                open: !this.state.open,
+                modal_error: !this.state.modal_error,
+                icon: this.state.icon == 'left' ? 'down' : 'left'
+            });
+        }
         
     }
 
@@ -306,12 +316,12 @@ export default class UserCrud extends Component {
             <table className="table mt-4 table-striped table-responsive">
                 <thead>
                     <th></th>
-                    <th><icon className="fa fa-institution"></icon>Instituição</th>
-                    <th><icon className="fa fa-tag"></icon>Tipo</th>
-                    <th><icon className="fa fa-tags"></icon>Subtipo</th>
-                    <th><icon className="fa fa-suitcase"></icon>Função</th>
-                    <th><icon className="fa fa-calendar-check-o"></icon>Entrada</th>
-                    <th><icon className="fa fa-calendar-times-o"></icon>Saída</th>
+                    <th><icon className="fa fa-institution"></icon> Instituição</th>
+                    <th><icon className="fa fa-tag"></icon> Tipo</th>
+                    <th><icon className="fa fa-tags"></icon> Subtipo</th>
+                    <th><icon className="fa fa-briefcase"></icon> Função</th>
+                    <th><icon className="fa fa-calendar-check-o"></icon> Entrada</th>
+                    <th><icon className="fa fa-calendar-times-o"></icon> Saída</th>
                 </thead>
                 <tbody>
                     {this.renderAffiliationRows()}
@@ -359,18 +369,18 @@ export default class UserCrud extends Component {
         event.target.value = "Sincronizando..."
 
         event.preventDefault();
-        window.confirm("Aguarde enquanto a base é sincronizada!");
 
         api.put(`/service/${id_domain}?service=sync`)
             .then( resp => {
-                window.alert("Base sincronizada com sucesso!");
+                //window.alert("Base sincronizada com sucesso!");
                 event.target.disabled = false;
                 event.target.className = "btn btn-info d-flex justify-content-end";
                 const personList = resp.data;
                 this.setState({ list: personList });
 
             }).catch((error) =>{
-                window.alert("Erro ao sincronizar a base!");
+                //window.alert("Erro ao sincronizar a base!");
+                this.toggle(event, "", true);
                 event.target.disabled = false;
                 event.target.className = "btn btn-info d-flex justify-content-end";
             });
@@ -440,12 +450,47 @@ export default class UserCrud extends Component {
             </div>
         );
     }
+
+    render_modal_error(){
+        return (
+            <div>
+                <Modal 
+                show={this.state.modal_error} 
+                onHide={e => {this.toggle(e,"", true)}}
+                size="lg"
+                >
+                    <Modal.Header>
+                    <Modal.Title className="text text-danger"> <icon className="fa fa-exclamation-circle text-danger"></icon> Erro ao sincronizar usuários</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <h5>Possíveis passos para resolver o problema:</h5>
+                        <div className="container">
+                            <ul className="list-group">
+                                <li>Verifique as configurações</li>
+                                <li>Verifique a conexão entre o sistema e Serviço de Diretórios</li>
+                                <li>Verifique as configurações de firewall</li>
+                            </ul>
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <Button variant="secondary" onClick={e => {this.toggle(e, "", true)}}>
+                        Fechar
+                    </Button>
+                    {/* <Button variant="primary" onClick={e => {this.toggle(e)}}>
+                        Save Changes
+                    </Button> */}
+                    </Modal.Footer>
+                </Modal>
+            </div>
+        );
+    }
     
     render() {
         return (
 
             <Main {...headerProps}>
                 {this.render_modal()}
+                {this.render_modal_error()}
             <Navbar bg="light" variant="light">
             <div className="container">
                 <Navbar.Brand href="#home"></Navbar.Brand>

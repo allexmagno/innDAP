@@ -35,7 +35,9 @@ export default class UserCrud extends Component {
             count: 0,
             open: false,
             modal: false,
+            modal_affiliation: false,
             saved: false,
+            edit_click: false,
             affiliation: {
                 affiliation: null,
                 organization: "",
@@ -259,14 +261,33 @@ export default class UserCrud extends Component {
         this.setState({ affiliation: affiliation });
     }
 
-    toggle(event, aff){
+    toggle(event, aff, edit_cancel){
 
-        this.setState({ 
-            aff_change: aff,
-            open: !this.state.open,
-            modal: !this.state.modal,
-            icon: this.state.icon == 'left' ? 'down' : 'left'
-        });
+        if(edit_cancel && this.state.edit_click){
+            this.state.list.push(this.state.affiliation)
+            let l = this.state.list;
+            const sorted = l.sort((a, b) => {
+                return a.affiliation < b.affiliation ? -1 : a.affiliation > b.affiliation ? 1 : 0;
+            })
+            this.setState({ list : sorted, edit_click: false });
+        }
+
+        if(aff == "add_affiliation"){
+            this.setState({ 
+                aff_change: aff,
+                open: !this.state.open,
+                modal_affiliation: !this.state.modal_affiliation,
+                icon: this.state.icon == 'left' ? 'down' : 'left'
+            });
+        }
+        else{
+            this.setState({ 
+                aff_change: aff,
+                open: !this.state.open,
+                modal: !this.state.modal,
+                icon: this.state.icon == 'left' ? 'down' : 'left'
+            });
+        }
         
     }
 
@@ -288,26 +309,28 @@ export default class UserCrud extends Component {
 
     listAffiliations(){
         return this.state.list.map(aff => (
-            <li className="list-group-item" key={String(aff.affiliation)}>
-                <strong>Afiliação {aff.affiliation}:</strong> {aff.organization} <br/>
-                <strong>Tipo:</strong> {aff.type.label} <br/>
-                <strong>Subtipo:</strong> {aff.subtype.label} <br/>
-                <strong>Cargo:</strong> {aff.role} <br/>
-                <strong>Instituição:</strong> {aff.organization}<br/>
-                <strong>Início:</strong> {aff.entrance} <br/>
-                <strong>Saída:</strong> {aff.exit} <br/>
-                <button className="btn btn-outline-warning" onClick={e => {this.toggle(e, aff)}}> 
-                    Editar
-                </button>
-                <button className="btn btn-outline-danger ml-2" onClick={e => this.removeAffiliation(e, aff)}> 
-                    Excluir
-                </button>
-            </li> 
+                <div className="col-12 col-md-4 border rounded" key={String(aff.affiliation)}>
+                    <strong>Afiliação {aff.affiliation}:</strong> {aff.organization} <br/>
+                    <strong>Tipo:</strong> {aff.type.label} <br/>
+                    <strong>Subtipo:</strong> {aff.subtype.label} <br/>
+                    <strong>Cargo:</strong> {aff.role} <br/>
+                    <strong>Instituição:</strong> {aff.organization}<br/>
+                    <strong>Início:</strong> {aff.entrance} <br/>
+                    <strong>Saída:</strong> {aff.exit} <br/>
+                    <button className="btn btn-outline-warning" onClick={e => {this.editAffiliation(e, aff)}}> 
+                        Editar
+                    </button>
+                    <button className="btn btn-outline-danger ml-2" onClick={e => this.removeAffiliation(e, aff)}> 
+                        Excluir
+                    </button>
+                </div>
         ));
     }
 
     editAffiliation(event, aff){
-        this.toggle(event);
+        
+        this.setState({ edit_click: true});
+        this.toggle(event, "add_affiliation");
         const list = this.state.list.filter( a => aff.affiliation !== a.affiliation );
         this.state.affiliation = aff
         this.setState({ list: list })
@@ -326,6 +349,91 @@ export default class UserCrud extends Component {
             this.state.list = list;
             this.setState({ list: list })
         }
+    }
+
+    table_affiliation(){
+
+        return (
+            <div className="form">
+            <div className="row">
+                <div id="number" className="col-12 col-md-2">
+                    <div className="form-group">
+                        <label> <icon className="fa fa-address-card-o"></icon> Afiliação</label>
+                        <input type="number" min="1" className="form-control"
+                            id="input_affiliation"
+                            name="affiliation"
+                            value={this.state.affiliation.affiliation}
+                            onChange={e => this.updateAffiliationField(e)}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col-12 col-md-6">
+                    <div className="form-group">
+                        <label><icon className="fa fa-institution"></icon> Instituição</label>
+                        <input type="text" className="form-control"
+                            id="input_organization"
+                            name="organization"
+                            value={this.state.affiliation.organization}
+                            onChange={e => this.updateAffiliationField(e)}
+                            placeholder={"instituição@PARQUE"}
+                        />
+                    </div>
+                </div>
+                <div className="col-12 col-md-6">
+                    <div className="form-group">
+                        <label><icon className="fa fa-briefcase"></icon> Função</label>
+                        <input type="text" className="form-control"
+                            name="role"
+                            value={this.state.affiliation.role}
+                            onChange={e => this.updateAffiliationField(e)}
+                            placeholder="Cargo"
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col-12 col-md-6">
+                    <div className="form-group">
+                        <label><icon className="fa fa-tag"></icon> Tipo</label>
+                        {this.selectType()}
+                    </div>   
+                </div>                                
+                <div className="col-12 col-md-6">
+                    <div className="form-group">
+                        <label><icon className="fa fa-tags"></icon> Subtipo</label>
+                        {this.selectSubType()}
+                    </div>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col-12 col-md-3">
+                    <div className="form-group">
+                        <label><icon className="fa fa-calendar-check-o"></icon> Data de Início</label>
+                        <input type="date" className="form-control"
+                            id="input_entrance"
+                            name="entrance"
+                            value={this.state.affiliation.entrance}
+                            onChange={e => this.updateAffiliationField(e)}
+                        />
+                    </div>
+                </div>
+                <div className="col-12 col-md-3">
+                    <div className="form-group">
+                        <label><icon className="fa fa-calendar-times-o"></icon> Data de Saída</label>
+                        <input type="date" className="form-control"
+                            name="exit"
+                            value={this.state.affiliation.exit}
+                            onChange={e => this.updateAffiliationField(e)}
+                        />
+                    </div>
+                </div>
+        </div>
+        </div>
+        );
+
     }
 
 
@@ -443,129 +551,40 @@ export default class UserCrud extends Component {
                         </div>
                     </div>
                 </div>
-
-
-                <hr></hr>
-                <h3>Adicionar Afiliações</h3>
-
                 <div className="row">
-                    <div className="col-12 col-md-8">
-
-                    <div className="row">
-                            <div id="number" className="col-12 col-md-3">
-                                <div className="form-group">
-                                    <input type="number" min="1" className="form-control"
-                                        id="input_affiliation"
-                                        name="affiliation"
-                                        value={this.state.affiliation.affiliation}
-                                        onChange={e => this.updateAffiliationField(e)}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                    </div>
-
-
+                    <div className="col-12 col-md-8">      
                         <div className="row">
-                            <div className="col-12 col-md-8">
-                                <div className="form-group">
-                                    <label>Instituição</label>
-                                    <input type="text" className="form-control"
-                                        id="input_organization"
-                                        name="organization"
-                                        value={this.state.affiliation.organization}
-                                        onChange={e => this.updateAffiliationField(e)}
-                                        placeholder={"instituição@PARQUE"}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Tipo</label>
-                                    {this.selectType()}
-                                </div>   
-                            </div>                                
-                            <div className="col-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Subtipo</label>
-                                    {this.selectSubType()}
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div className="row">
-                            <div className="col-12 col-md-8">
-                                <div className="form-group">
-                                    <label>Função</label>
-                                    <input type="text" className="form-control"
-                                        name="role"
-                                        value={this.state.affiliation.role}
-                                        onChange={e => this.updateAffiliationField(e)}
-                                        placeholder="Cargo"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Data de Início</label>
-                                    <input type="date" className="form-control"
-                                        id="input_entrance"
-                                        name="entrance"
-                                        value={this.state.affiliation.entrance}
-                                        onChange={e => this.updateAffiliationField(e)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Data de Saída</label>
-                                    <input type="date" className="form-control"
-                                        name="exit"
-                                        value={this.state.affiliation.exit}
-                                        onChange={e => this.updateAffiliationField(e)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-8 d-flex justify-content-end">
+                            <div className="col-8 d-flex justify-content">
                                 <button className="btn btn-outline-success"
-                                    onClick={e => this.addAffiliation(e)}
+                                    onClick={e => this.toggle(e, "add_affiliation")}
                                 >
                                     Afiliação <i className="fa fa-plus text-success"></i>
                                 </button>
                             </div>
                         </div>
-
-                    </div>
-
-                    <div className="col-12 col-md-3">
-                        <ul className="list-group">
-                            {this.listAffiliations()}
-                        </ul>
                     </div>
                 </div>
+                <hr></hr>
+                <div className="row">
+                    {this.listAffiliations()}
+                </div>
+                
 
-
-                <div className="justify-content-end">
-                            <button className="btn btn-outline-primary"
-                                onClick={e => this.save(e)}
-                            >
-                                Salvar
-                            </button>
-                            <button className="btn btn-outline-secondary ml-2"
-                                onClick={e => this.clear(e)}
-                            >
-                                Cancelar
-                            </button>
+                <hr></hr>
+                <div className="row">
+                    <br/>
+                    <div className="col-12 d-flex justify-content-end" >
+                        <button className="btn btn-outline-primary"
+                            onClick={e => this.save(e)}
+                        >
+                            Salvar
+                        </button>
+                        <button className="btn btn-outline-secondary ml-2"
+                            onClick={e => this.clear(e)}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -601,8 +620,8 @@ export default class UserCrud extends Component {
         );
     }
 
-    async addAffiliation(event){
-        const aff = { ...this.state.affiliation };
+    check_affiliation(aff){
+
         let required = [];
 
         if(!aff.affiliation){
@@ -624,11 +643,21 @@ export default class UserCrud extends Component {
         if(liAff.length > 0){
             required.push(document.getElementById("input_affiliation"));
         }
-        console.log(required);
+
+        return required;
+
+    }
+
+    async addAffiliation(event){
+        const aff = { ...this.state.affiliation };
+        let required = this.check_affiliation(aff);
+
         if(required.length == 0){
             for(let inp of this.state.list_ok){
                 inp.style.border = "";
             }
+
+            this.toggle(event, "add_affiliation");
             
             let l = this.state.list;
 
@@ -694,12 +723,45 @@ export default class UserCrud extends Component {
         );
     }
 
+    render_modal_affiliation(){
+        return (
+            <div>
+                <Modal 
+                show={this.state.modal_affiliation} 
+                onHide={e => {this.toggle(e, "add_affiliation")}}
+                size="lg"
+                backdrop="static"
+                >
+                    <Modal.Header>
+                    <Modal.Title><icon className="fa fa-address-book-o"></icon> Afiliação </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.table_affiliation()}
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <button  className="btn btn-outline-danger"
+                    onClick={e => {this.toggle(e, "add_affiliation", true)}}>
+                        Cancelar
+                    </button>
+                    <button className="btn btn-outline-success"
+                        onClick={e => this.addAffiliation(e)}
+                    >
+                        Salvar
+                    </button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
+        );
+    }
+
     render() {
         return (
             <Main {...headerProps}>
+                {this.render_modal_affiliation()}
                 {this.render_modal()}
                 {this.renderForm()}
             </Main>
         );
     }
+
 }
