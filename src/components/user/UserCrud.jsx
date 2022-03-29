@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Main from '../templates/Main';
 import api from '../../services/Axios';
-import {Button, Modal} from 'react-bootstrap';
+import {Button, Modal, Table } from 'react-bootstrap';
 import './UserCrud.css';
 import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
@@ -304,7 +304,7 @@ export default class UserCrud extends Component {
             case "sync":
                 return (
                     <li className="text-success">
-                        Sincronizado <i className="fa fa-check-circle"></i>
+                        Sinc <i className="fa fa-check-circle"></i>
                     </li>
                 );
         }
@@ -313,20 +313,20 @@ export default class UserCrud extends Component {
 
     renderAffiliationTable() {
         return (
-            <table className="table mt-4 table-striped table-responsive">
+            <Table responsive striped centered size="lg">
                 <thead>
                     <th></th>
-                    <th><icon className="fa fa-institution"></icon> Instituição</th>
-                    <th><icon className="fa fa-tag"></icon> Tipo</th>
-                    <th><icon className="fa fa-tags"></icon> Subtipo</th>
-                    <th><icon className="fa fa-briefcase"></icon> Função</th>
-                    <th><icon className="fa fa-calendar-check-o"></icon> Entrada</th>
-                    <th><icon className="fa fa-calendar-times-o"></icon> Saída</th>
+                    <th><icon className="fa fa-institution"></icon>Inst.</th>
+                    <th><icon className="fa fa-tag"></icon>Tipo</th>
+                    <th><icon className="fa fa-tags"></icon>Subtipo</th>
+                    <th><icon className="fa fa-briefcase"></icon>Cargo</th>
+                    <th><icon className="fa fa-calendar-check-o"></icon>Entrada</th>
+                    <th><icon className="fa fa-calendar-times-o"></icon>Saída</th>
                 </thead>
                 <tbody>
                     {this.renderAffiliationRows()}
                 </tbody>
-            </table>
+            </Table>
         )
     }
 
@@ -432,7 +432,7 @@ export default class UserCrud extends Component {
                 onHide={e => {this.toggle(e)}}
                 size="lg"
                 >
-                    <Modal.Header closeButton>
+                    <Modal.Header>
                     <Modal.Title>Afiliações de { this.state.person.uid }</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>

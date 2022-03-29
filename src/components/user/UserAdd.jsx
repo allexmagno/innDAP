@@ -165,6 +165,8 @@ export default class UserCrud extends Component {
                 list.push(affiliation)
             }
             user.affiliations = []
+            let senha = document.getElementById("input-password");
+            senha.readOnly = true;
             this.setState({ user: user, list: list })
         }
     }
@@ -547,6 +549,7 @@ export default class UserCrud extends Component {
                                 value={this.state.user.password}
                                 onChange={e => this.updateUserField(e)}
                                 placeholder="Senha"
+                                id="input-password"
                             />
                         </div>
                     </div>

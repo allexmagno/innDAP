@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import Main from '../templates/Main';
 import api from '../../services/Axios';
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
+import { Button, Modal } from 'react-bootstrap';
 
 
 const headerProps = {
@@ -18,7 +19,8 @@ export default class UserCrud extends Component {
         this.state = {
             list: [],
             domain: {
-                affiliations: []
+                id: null,
+                name: null,
             },
             open: false,
             modal: false,
@@ -50,7 +52,7 @@ export default class UserCrud extends Component {
         api[method](domain)
             .then(resp => {
                 const list = this.getUpdatedList(resp.data);
-                this.setState( { domain: domain, list: list} )
+                this.setState( { domain: {id: null, name: null}, list: list} )
             })
     }
 
@@ -60,18 +62,13 @@ export default class UserCrud extends Component {
         return list;
     }
 
-    updateField(event) {
+    updateDomainField(event) {
         const domain = { ...this.state.domain };
         domain[event.target.name] = event.target.value;
         this.setState({ domain: domain });
     }
 
-    toggle(event, id){
-        if(id){
-            const domain = this.state.list.filter( d => d.id == id).pop()
-            this.setState({ domain: domain })
-        }
-
+    toggle(event, edit){
         this.setState({ 
             open: !this.state.open,
             modal: !this.state.modal,
@@ -80,7 +77,6 @@ export default class UserCrud extends Component {
         
     }
     
-
     renderDomainTable() {
         return (
             <table className="table mt-4">
@@ -89,9 +85,11 @@ export default class UserCrud extends Component {
                 <th>Nome</th>
                 <th>Domínio</th>
                 <th>
-                        <Link to="#">
-                            <i className="fa fa-plus text-success"></i>
-                        </Link>
+                <Link to="#"
+                    onClick={e => this.toggle(e)}
+                >
+                    <i className="fa fa-plus text-success"></i>
+                </Link>
                 </th>
             </thead>
             <tbody>
@@ -99,7 +97,7 @@ export default class UserCrud extends Component {
             </tbody>
         </table>
     )
-}
+    }
 
     renderDomainRows(){
         let count = 0;
@@ -127,9 +125,92 @@ export default class UserCrud extends Component {
             ));
     }
 
+    tableDomainForm(){
+        return (
+            <table className="table mt-4">
+            <thead>
+                <th></th>
+                <th>Nome</th>
+                <th>Domínio</th>
+            </thead>
+            <tbody>
+                {this.renderDomainRowsForm()}
+            </tbody>
+            </table>
+        )
+    }
+
+    renderDomainForm(){
+        return (
+        <div className="form">
+        <div className="row">
+            <div className="col-12 col-md-6">
+                <div className="form-group">
+                    <label><icon className="fa fa-building"></icon> Domínio</label>
+                    <input type="text" className="form-control"
+                        id="input_domain"
+                        name="id"
+                        value={this.state.domain.id}
+                        onChange={e => this.updateDomainField(e)}
+                        placeholder="FQDN"
+                    />
+                </div>
+            </div>
+            <div className="col-12 col-md-6">
+                <div className="form-group">
+                    <label><icon className="fa fa-info-circle"></icon> Nome</label>
+                    <input type="text" className="form-control"
+                        name="name"
+                        value={this.state.domain.name}
+                        onChange={e => this.updateDomainField(e)}
+                        placeholder="Nome"
+                    />
+                </div>
+            </div>
+        </div>
+        </div>
+        );
+
+    }
+
+    addDomain(){
+    }
+
+    render_modal_domain(){
+        return (
+            <div>
+                <Modal 
+                show={this.state.modal} 
+                onHide={e => {this.toggle(e)}}
+                size="lg"
+                backdrop="static"
+                >
+                    <Modal.Header>
+                    <Modal.Title><icon className="fa fa-plus"></icon> Adicionar Domínio </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.renderDomainForm()}
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <button  className="btn btn-outline-danger"
+                    onClick={e => {this.toggle(e, true)}}>
+                        Cancelar
+                    </button>
+                    <button className="btn btn-outline-success"
+                        onClick={e => this.save()}
+                    >
+                        Salvar
+                    </button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
+        );
+    }
+
     render() {
         return (
             <Main {...headerProps}>
+                 {this.render_modal_domain()}
                 {this.renderDomainTable()}
             </Main>
         )
