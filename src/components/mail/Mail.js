@@ -1,12 +1,12 @@
-import React, { Component } from 'react';
+import React, { Component, useRef } from 'react';
 import Main from '../templates/Main';
 import api from '../../services/Axios';
-import Select from 'react-select';
-import { Button, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
-
-
+let props = {
+    selectedValue: null
+};
 
 const headerProps = {
     icon: 'envelope',
@@ -33,12 +33,18 @@ export default class MailCrud extends Component {
             },
             open: false,
             modal: false,
-            domain_list: []
+            domain_list: [],
+            protocol_list: [
+                {value: 'TLS', label: 'Protocolo TLS'},
+                {value: 'SSL', label: 'Protocolo SSL'}
+            ]
         };
+        this.selectProtocolRef = null;
+        this.selectDomainsRef = {label: "sa", value: 'sa'};
         this.handleOpenModal = this.handleOpenModal.bind(this);
         this.handleCloseModal = this.handleCloseModal.bind(this);
         this.handleDomains = this.handleDomains.bind(this);
-
+        this.handleProtocols = this.handleProtocols.bind(this);
     };
 
 
@@ -69,8 +75,8 @@ export default class MailCrud extends Component {
     }
 
     save() {
-        this.toggle();
         const mail = this.state.mail;
+        this.toggle();
         let method = 'post';
         let to_uri = uri;
         if(mail.id){
@@ -97,6 +103,17 @@ export default class MailCrud extends Component {
     }
 
     toggle(event, id){
+        if(!id){
+            let mail = {
+                id: null,
+                domain: null,
+                address: null,
+                server: null,
+                port: null,
+                protocol: null
+            };
+            this.setState({mail: mail});
+        }
         this.setState({ 
             open: !this.state.open,
             modal: !this.state.modal,
@@ -215,12 +232,7 @@ export default class MailCrud extends Component {
                     <div className="col-12 col-md-6">
                         <div className="form-group">
                             <label>Protocolo</label>
-                            <input type="text" className="form-control"
-                                name="protocol"
-                                value={this.state.mail.protocol}
-                                onChange={e => this.updateField(e)}
-                                placeholder="TLS ou SSL"
-                            />
+                            {this.selectProtocol()}
                         </div>
                     </div>
 
@@ -240,14 +252,14 @@ export default class MailCrud extends Component {
                 <hr />
                 <div className="row">
                     <div className="col-12 d-flex justify-content-end">
-                        <button className="btn primary"
+                        <button className="btn btn-outline-success"
                             onClick={e => this.save(e)}
                         >
                             Salvar
                         </button>
                         
 
-                        <button className="btn btn-secondary ml-2"
+                        <button className="btn btn-outline-danger ml-2"
                             onClick={e => this.toggle(e)}    
                         >
                             Cancelar
@@ -258,31 +270,64 @@ export default class MailCrud extends Component {
         );
     }
 
-    handleDomains(selected){
+    handleDomains(e){
         let mail = this.state.mail;
-        mail.domain = selected.id;
+        mail.domain = e.target.value;
         this.setState({ mail: mail });
     }
 
     selectDomains(){
-        return(
-            <Select 
-            ref={r => {
-                this.selectTypeRef = r;
-            }}
-            onChange={this.handleDomains}
-            options={this.state.domain_list}
-            placeholder= 'Selecione o domínio'
-            noOptionsMessage={() => "Selecione um domínio"}  
-            id="input_domains"
-            />
+        return (
+            <div>
+                <select className="form-select mb-3" value={this.state.mail.domain} onChange={e => this.handleDomains(e)}>
+                <option selected>Selecione o domínio</option>
+                    {this.state.domain_list.map( d => (
+                        <option value={d.value}>{d.label}</option>
+                    ))}
+                </select>
+            </div>
         );
     }
 
+    handleProtocols(e){
+        let mail = this.state.mail;
+        mail.protocol = e.target.value;
+        this.setState({ mail: mail });
+    }
+
+    selectProtocol(){
+        return (
+            <div>
+                <select className="form-select mb-3" value={this.state.mail.protocol} onChange={e => this.handleProtocols(e)}>
+                <option selected>Selecione o protocolo</option>
+                    {this.state.protocol_list.map( p => (
+                        <option value={p.value}>{p.label}</option>
+                    ))}
+                </select>
+            </div>
+        );
+    }
+
+
     editMail(event, mail){
-        console.log(mail);
-        localStorage.setItem("mail", JSON.stringify(mail));
-        window.location = "mail/add";
+
+        
+        const d_list = [...this.state.domain_list];
+        d_list.filter(d => d.value == mail.domain );
+        const p_list = [...this.state.protocol_list];
+        p_list.filter(p => p.value = mail.protocol );
+
+        let domain_selected = null;
+        let protocol_selected = null;
+        if(d_list){ domain_selected = d_list.pop(); }
+        if(p_list){ protocol_selected = p_list.pop(); }
+
+        if(this.selectProtocolRef){
+            this.selectProtocolRef.setValue(protocol_selected);
+        }
+        
+        this.setState({ mail: mail, selectProtocolRef: protocol_selected });
+        this.toggle(event, mail.id);
     }
 
     load(mail) {

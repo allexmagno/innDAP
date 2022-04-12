@@ -742,14 +742,14 @@ export default class UserCrud extends Component {
                         {this.table_affiliation()}
                     </Modal.Body>
                     <Modal.Footer>
-                    <button  className="btn btn-outline-danger"
-                    onClick={e => {this.toggle(e, "add_affiliation", true)}}>
-                        Cancelar
-                    </button>
                     <button className="btn btn-outline-success"
                         onClick={e => this.addAffiliation(e)}
                     >
                         Salvar
+                    </button>
+                    <button  className="btn btn-outline-danger"
+                    onClick={e => {this.toggle(e, "add_affiliation", true)}}>
+                        Cancelar
                     </button>
                     </Modal.Footer>
                 </Modal>

@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import Main from '../templates/Main';
 import api from '../../services/Axios';
 import { Link } from 'react-router-dom';
-import { Button, Modal } from 'react-bootstrap';
-
+import { Modal } from 'react-bootstrap';
 
 const headerProps = {
     icon: 'building',
@@ -11,6 +10,7 @@ const headerProps = {
     subtitle: 'Gerenciamento de domínios'
 };
 
+const uri = "/domain";
 
 export default class UserCrud extends Component {
 
@@ -21,6 +21,7 @@ export default class UserCrud extends Component {
             domain: {
                 id: null,
                 name: null,
+                ldap_servers: []
             },
             open: false,
             modal: false,
@@ -46,13 +47,20 @@ export default class UserCrud extends Component {
         this.setState({ showModal: false });
     }
 
-    save() {
+    save(update) {
         const domain = this.state.domain;
-        const method = domain.id ? 'put' : 'post';
-        api[method](domain)
+        this.toggle();
+        let method = 'post';
+        let to_uri = uri;
+        console.log(domain);
+        if(update){
+            method = 'put';
+            to_uri = uri + `/${domain.id}`;
+        }
+        api[method](to_uri, domain)
             .then(resp => {
                 const list = this.getUpdatedList(resp.data);
-                this.setState( { domain: {id: null, name: null}, list: list} )
+                this.setState( { domain: {id: null, name: null, ldap_servers: []}, list: list} )
             })
     }
 
@@ -69,6 +77,16 @@ export default class UserCrud extends Component {
     }
 
     toggle(event, edit){
+
+        if(!edit){
+            let domain = {
+                id: null,
+                name: null,
+                ldap_servers: []
+            };
+            this.setState({domain: domain});
+        }
+
         this.setState({ 
             open: !this.state.open,
             modal: !this.state.modal,
@@ -76,14 +94,28 @@ export default class UserCrud extends Component {
         });
         
     }
+
+    remove(event, domain) {
+        api.delete(`${uri}/${domain.id}`)
+            .then(resp => {
+                const list = this.state.list.filter(d => d !== domain);
+                this.setState({ list: list });
+            })
+    }
+
+    editDomain(e, domain){ 
+        this.setState({domain: domain})
+        this.toggle(e, true);
+
+    }
     
     renderDomainTable() {
         return (
             <table className="table mt-4">
             <thead>
                 <th></th>
-                <th>Nome</th>
                 <th>Domínio</th>
+                <th>Nome</th>
                 <th>
                 <Link to="#"
                     onClick={e => this.toggle(e)}
@@ -104,20 +136,27 @@ export default class UserCrud extends Component {
         return this.state.list.map(domain => (
             <tr key={String(domain.id)}>      
                 <td>{++count}</td> 
-                <td>{domain.name}</td>
                 <td>{domain.id}</td>
+                <td>{domain.name}</td>
                 <td>
                     <ul>
                         <li>
-                            <Link to="/ldap/edit" className="text-info">
+                            <div>
+                                <a className="text-info pointer"
+                                    onClick={e => this.editDomain(e, domain)}
+                                >
                                 <i className="fa fa-edit"></i>
-                            </Link>
+                                </a>
+                            </div>
                         </li>
                         <li>
-                            <Link to="/" className="text-danger">
+                            <div>
+                                <a className="text-danger"
+                                    onClick={e => this.remove(e, domain)}
+                                >
                                 <i className="fa fa-remove"></i>
-                            </Link>
-                            
+                                </a>
+                            </div> 
                         </li>
                     </ul>
                 </td>
@@ -192,14 +231,14 @@ export default class UserCrud extends Component {
                         {this.renderDomainForm()}
                     </Modal.Body>
                     <Modal.Footer>
+                    <button className="btn btn-outline-success"
+                        onClick={e => this.save(false)}
+                    >
+                        Salvar
+                    </button>
                     <button  className="btn btn-outline-danger"
                     onClick={e => {this.toggle(e, true)}}>
                         Cancelar
-                    </button>
-                    <button className="btn btn-outline-success"
-                        onClick={e => this.save()}
-                    >
-                        Salvar
                     </button>
                     </Modal.Footer>
                 </Modal>
