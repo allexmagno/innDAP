@@ -90,7 +90,7 @@ export default class UserCrud extends Component {
         this.setState({ 
             open: !this.state.open,
             modal: !this.state.modal,
-            icon: this.state.icon == 'left' ? 'down' : 'left'
+            icon: this.state.icon === 'left' ? 'down' : 'left'
         });
         
     }
