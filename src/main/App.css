@@ -1,3 +1,5 @@
+@import '~bootstrap/dist/css/bootstrap.css';
+
 :root {
     --bg-dark: #1A2F3A;
 
@@ -17,6 +19,9 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+li:hover {
+    cursor: pointer;
+}
 /* Layout em Grid */
 
 .app {

@@ -165,6 +165,8 @@ export default class UserCrud extends Component {
                 list.push(affiliation)
             }
             user.affiliations = []
+            let senha = document.getElementById("input-password");
+            senha.readOnly = true;
             this.setState({ user: user, list: list })
         }
     }
@@ -547,6 +549,7 @@ export default class UserCrud extends Component {
                                 value={this.state.user.password}
                                 onChange={e => this.updateUserField(e)}
                                 placeholder="Senha"
+                                id="input-password"
                             />
                         </div>
                     </div>
@@ -739,14 +742,14 @@ export default class UserCrud extends Component {
                         {this.table_affiliation()}
                     </Modal.Body>
                     <Modal.Footer>
-                    <button  className="btn btn-outline-danger"
-                    onClick={e => {this.toggle(e, "add_affiliation", true)}}>
-                        Cancelar
-                    </button>
                     <button className="btn btn-outline-success"
                         onClick={e => this.addAffiliation(e)}
                     >
                         Salvar
+                    </button>
+                    <button  className="btn btn-outline-danger"
+                    onClick={e => {this.toggle(e, "add_affiliation", true)}}>
+                        Cancelar
                     </button>
                     </Modal.Footer>
                 </Modal>
